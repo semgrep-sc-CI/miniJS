@@ -1,0 +1,33 @@
+on:
+  workflow_dispatch: {}
+  pull_request: {}
+  push:
+    branches:
+    - main
+    - master
+    paths:
+    - .github/workflows/semgrep.yml
+  schedule:
+  # random HH:MM to avoid a load spike on GitHub Actions at 00:00
+  - cron: 48 1 * * *
+  
+name: Semgrep
+jobs:
+  semgrep:
+    name: semgrep/ci
+    runs-on: ubuntu-latest
+    env:
+      SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+    container:
+      image: semgrep/semgrep
+
+    # Skip any PR created by dependabot to avoid permission issues:
+    if: (github.actor != 'dependabot[bot]')
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Semgrep Security Scan
+        run: |
+          semgrep ci
